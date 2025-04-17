@@ -183,6 +183,8 @@ to_ros_msg( const Map& cpp_map )
   ros_map.y_max = cpp_map.quadtree.boundary.y_max;
   ros_map.y_min = cpp_map.quadtree.boundary.y_min;
 
+  ros_map.header.frame_id = "world";
+
   return ros_map;
 }
 
@@ -284,6 +286,7 @@ to_cpp_type( const adore_ros2_msgs::msg::Route& msg )
   route.destination.x = msg.goal.x;
   route.destination.y = msg.goal.y;
 
+
   return route;
 }
 
@@ -311,6 +314,8 @@ to_ros_msg( const Route& route )
   msg.start.y = route.start.y;
   msg.goal.x  = route.destination.x;
   msg.goal.y  = route.destination.y;
+
+  msg.header.frame_id = "world";
 
   return msg;
 }
