@@ -320,7 +320,7 @@ to_ros_msg( const Route& route )
   msg.goal.x  = route.destination.x;
   msg.goal.y  = route.destination.y;
 
-  // msg.header.frame_id = "world";
+  msg.header.frame_id = "world";
 
   return msg;
 }
