@@ -71,11 +71,12 @@ to_ros_msg( const Lane& cpp_lane )
   {
     ros_lane.center_points.push_back( to_ros_msg( point ) ); // Convert each MapPoint
   }
-  ros_lane.type        = static_cast<uint8_t>( cpp_lane.type );
-  ros_lane.material    = static_cast<uint8_t>( cpp_lane.material );
-  ros_lane.id          = cpp_lane.id;
-  ros_lane.road_id     = cpp_lane.road_id;
-  ros_lane.speed_limit = cpp_lane.speed_limit;
+  ros_lane.type              = static_cast<uint8_t>( cpp_lane.type );
+  ros_lane.material          = static_cast<uint8_t>( cpp_lane.material );
+  ros_lane.id                = cpp_lane.id;
+  ros_lane.road_id           = cpp_lane.road_id;
+  ros_lane.speed_limit       = cpp_lane.speed_limit;
+  ros_lane.left_of_reference = cpp_lane.left_of_reference;
   return ros_lane;
 }
 
@@ -138,8 +139,10 @@ to_ros_msg( const Road& cpp_road )
   {
     ros_road.lanes.push_back( to_ros_msg( *lane ) );
   }
-  ros_road.id   = cpp_road.id;
-  ros_road.name = cpp_road.name;
+  ros_road.id       = cpp_road.id;
+  ros_road.name     = cpp_road.name;
+  ros_road.one_way  = cpp_road.one_way;
+  ros_road.category = static_cast<uint8_t>( cpp_road.category );
   return ros_road;
 }
 
@@ -182,6 +185,8 @@ to_ros_msg( const Map& cpp_map )
   ros_map.x_min = cpp_map.quadtree.boundary.x_min;
   ros_map.y_max = cpp_map.quadtree.boundary.y_max;
   ros_map.y_min = cpp_map.quadtree.boundary.y_min;
+
+  ros_map.header.frame_id = "world";
 
   return ros_map;
 }
@@ -251,13 +256,13 @@ Route
 to_cpp_type( const adore_ros2_msgs::msg::Route& msg )
 {
   Route route;
-
   for( const auto& section : msg.sections )
   {
     auto                          cpp_section = to_cpp_type( section );
     std::shared_ptr<RouteSection> section_ptr = std::make_shared<RouteSection>( cpp_section );
-    route.lane_to_sections[section.lane_id]   = section_ptr;
-    route.s_to_sections[section.lane_id]      = section_ptr;
+    route.sections.push_back( section_ptr );
+    route.lane_to_sections[section.lane_id] = section_ptr;
+    route.s_to_sections[section.route_s]    = section_ptr;
   }
 
   for( const auto& point_msg : msg.center_points )
@@ -269,6 +274,7 @@ to_cpp_type( const adore_ros2_msgs::msg::Route& msg )
     auto it = route.lane_to_sections.find( mp.parent_id );
     if( it == route.lane_to_sections.end() )
     {
+      // std::cerr << "section not found when converting  " << mp.parent_id << std::endl;
       continue;
     }
     auto   section_ptr         = it->second; // shared_ptr<RouteSection>
@@ -278,11 +284,13 @@ to_cpp_type( const adore_ros2_msgs::msg::Route& msg )
     route.center_lane[route_s] = mp;
   }
 
+
   // Convert start and destination points
   route.start.x       = msg.start.x;
   route.start.y       = msg.start.y;
   route.destination.x = msg.goal.x;
   route.destination.y = msg.goal.y;
+
 
   return route;
 }
@@ -311,6 +319,8 @@ to_ros_msg( const Route& route )
   msg.start.y = route.start.y;
   msg.goal.x  = route.destination.x;
   msg.goal.y  = route.destination.y;
+
+  msg.header.frame_id = "world";
 
   return msg;
 }
